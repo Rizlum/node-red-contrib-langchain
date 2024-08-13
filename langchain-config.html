@@ -1,0 +1,32 @@
+<script type="text/javascript">
+    RED.nodes.registerType('langchain-config', {
+        category: 'config',
+        defaults: {
+            name: { value: "" },
+            url: { value: "https://api.openai.com/v1" },
+            apiKey: { value: "" },
+        },
+        label: function () {
+            return this.name || `${this.url} (${(this.apiKey ?? '').slice(0, 5)}...)`;
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="langchain-config">
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-config-input-name" placeholder="name">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-url"><i class="fa fa-link"></i> Url</label>
+        <input type="text" id="node-config-input-url" placeholder="Url">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-apiKey"><i class="fa fa-key"></i> Api Key</label>
+        <input type="text" id="node-config-input-apiKey" placeholder="Api Key">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="langchain-config">
+    <p>A simple node that converts the message payloads into all langchain-config characters</p>
+</script>
