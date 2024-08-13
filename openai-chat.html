@@ -1,0 +1,65 @@
+<script type="text/javascript">
+    RED.nodes.registerType('openai-chat', {
+        category: 'Rizlum',
+        color: '#a6bbcf',
+        defaults: {
+            name: { value: "" },
+            config: { value: "", type: "langchain-config" },
+            model: { value: "gpt-4o" },
+            messages: {
+                value: JSON.stringify([
+                    { "role": "system", "content": "You're a helpful assistant" },
+                    { "role": "user", "content": "Hello" }
+                ])
+            },
+            messagesType: { value: "json" },
+            customOptions: { value: "{}" },
+            customOptionsType: { value: "json" },
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "file.svg",
+        label: function () {
+            return this.name || `Basic Chain (${this.model})`;
+        },
+        oneditprepare: function () {
+            $("#node-input-messages").typedInput({
+                types: ["msg", "json", "jsonata"],
+                typeField: $("#node-input-messagesType")
+            });
+            $("#node-input-customOptions").typedInput({
+                types: ["msg", "json", "jsonata"],
+                typeField: $("#node-input-customOptionsType")
+            });
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="openai-chat">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-config"><i class="fa fa-cog"></i> Config</label>
+        <input type="text" id="node-input-config" placeholder="Config">
+    </div>
+    <div class="form-row">
+        <label for="node-input-model"><i class="fa fa-model"></i> Model</label>
+        <input type="text" id="node-input-model" placeholder="model">
+    </div>
+    <div class="form-row">
+        <label for="node-input-messages"><i class="fa fa-chain"></i> Messages</label>
+        <input type="text" id="node-input-messages" placeholder="messages">
+        <input type="hidden" id="node-input-messagesType">
+    </div>
+    <div class="form-row">
+        <label for="node-input-customOptions"><i class="fa fa-chain"></i> Custom Options</label>
+        <input type="text" id="node-input-customOptions" placeholder="customOptions">
+        <input type="hidden" id="node-input-customOptionsType">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="openai-chat">
+    <p>A simple node that converts the message payloads into all openai-chat characters</p>
+</script>
