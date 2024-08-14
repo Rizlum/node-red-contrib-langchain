@@ -15,14 +15,17 @@
             messagesType: { value: "json" },
             customOptions: { value: "{}" },
             customOptionsType: { value: "json" },
+            tools: { value: [] }
         },
         inputs: 1,
         outputs: 1,
         icon: "file.svg",
         label: function () {
-            return this.name || `Basic Chain (${this.model})`;
+            const agent = this.tools && this.tools.length > 0 ? 'Agent' : 'Chat'
+            return this.name || `${agent} (${this.model})`;
         },
         oneditprepare: function () {
+            const node = this;
             $("#node-input-messages").typedInput({
                 types: ["msg", "json", "jsonata"],
                 typeField: $("#node-input-messagesType")
@@ -31,6 +34,65 @@
                 types: ["msg", "json", "jsonata"],
                 typeField: $("#node-input-customOptionsType")
             });
+            const toolList = $("#node-input-tools-container").css('min-height', '150px').css('min-width', '450px').editableList({
+                addItem: function (container, i, tool) {
+                    const row = $('<div/>').css({
+                        overflow: 'hidden',
+                        whiteSpace: 'nowrap',
+                        display: 'flex'
+                    }).appendTo(container);
+                    const nameCell = $('<div/>').css({ 'flex-grow': 1 }).appendTo(row);
+                    const nameInput = $('<input/>', { class: "node-input-tool-name", type: "text", style: "width: 100%" })
+                        .appendTo(nameCell)
+                        .typedInput({ default: 'str', types: ['str', 'msg', 'jsonata'] });
+
+                    const descriptionCell = $('<div/>').css({ 'flex-grow': 1, 'margin-left': '10px' }).appendTo(row);
+                    const descriptionInput = $('<input/>', { class: "node-input-tool-description", type: "text", style: "width: 100%" })
+                        .appendTo(descriptionCell)
+                        .typedInput({ types: ['str', 'msg', 'jsonata'] });
+
+                    const schemaCell = $('<div/>').css({ 'flex-grow': 1, 'margin-left': '10px' }).appendTo(row);
+                    const schemaInput = $('<input/>', { class: "node-input-tool-schema", type: "text", style: "width: 100%" })
+                        .appendTo(schemaCell)
+                        .typedInput({ types: ['msg', 'json', 'jsonata'] });
+
+                    const { name, nameType, description, descriptionType, schema, schemaType } = tool;
+
+                    nameInput.typedInput('type', nameType ?? 'str');
+                    nameInput.typedInput('value', name ?? 'Name');
+                    descriptionInput.typedInput('type', descriptionType ?? 'str');
+                    descriptionInput.typedInput('value', description ?? 'Call this tool to');
+                    schemaInput.typedInput('type', schemaType ?? 'json');
+                    schemaInput.typedInput('value', schema ?? '{"type":"object","properties":{"id":{"type":"number"}}}');
+                },
+                sortable: true,
+                removable: true
+            });
+            if (node.tools) {
+                for (let index = 0; index < node.tools.length; index++) {
+                    const element = node.tools[index];
+                    toolList.editableList('addItem', node.tools[index]);
+                }
+            }
+            console.log('oneditprepare::tools', node.tools);
+        },
+        oneditsave: function () {
+            const node = this;
+            const tools = $("#node-input-tools-container").editableList('items');
+            node.tools = [];
+            tools.each(function (i) {
+                const tool = $(this);
+                const nameType = tool.find(".node-input-tool-name").typedInput('type');
+                const name = tool.find(".node-input-tool-name").typedInput('value');
+                const descriptionType = tool.find(".node-input-tool-description").typedInput('type');
+                const description = tool.find(".node-input-tool-description").typedInput('value');
+                const schemaType = tool.find(".node-input-tool-schema").typedInput('type');
+                const schema = tool.find(".node-input-tool-schema").typedInput('value');
+                node.tools.push({
+                    name, nameType, description, descriptionType, schema, schemaType
+                });
+            });
+            console.log('oneditsave::tools', node.tools);
         }
     });
 </script>
@@ -57,6 +119,12 @@
         <label for="node-input-customOptions"><i class="fa fa-chain"></i> Custom Options</label>
         <input type="text" id="node-input-customOptions" placeholder="customOptions">
         <input type="hidden" id="node-input-customOptionsType">
+    </div>
+    <div class="form-row" style="margin-bottom:0;">
+        <label><i class="fa fa-list"></i> Tools</span></label>
+    </div>
+    <div class="form-row node-input-tools-container-row">
+        <ol id="node-input-tools-container"></ol>
     </div>
 </script>
 
