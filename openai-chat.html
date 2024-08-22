@@ -59,7 +59,7 @@
                     const { name, nameType, description, descriptionType, schema, schemaType } = tool;
 
                     nameInput.typedInput('type', nameType ?? 'str');
-                    nameInput.typedInput('value', name ?? 'Name');
+                    nameInput.typedInput('value', name ?? 'Name | Url | __structured_output__');
                     descriptionInput.typedInput('type', descriptionType ?? 'str');
                     descriptionInput.typedInput('value', description ?? 'Call this tool to');
                     schemaInput.typedInput('type', schemaType ?? 'json');

@@ -1,7 +1,7 @@
 import { Node, NodeDef, NodeInitializer, NodeMessage } from "node-red";
 import { LangChainConfigNodeDef } from "./langchain-config";
 
-import OpenAI from 'openai';
+import OpenAI, { APIUserAbortError } from 'openai';
 import { ChatCompletionMessageParam, ChatCompletionTool } from "openai/resources/chat/completions";
 import { RunnableTools } from "openai/lib/RunnableFunction";
 
@@ -47,12 +47,19 @@ const LangchainChatNodeInitializer: NodeInitializer = (RED) => {
             });
 
             const messages: ChatCompletionMessageParam[] = await evaluateNodeProperty(n.messages, n.messagesType, node, msg);
+            const messages1: ChatCompletionMessageParam[] = [];
 
             if (n.tools && n.tools.length > 0) {
                 const tools: RunnableTools<any> = await Promise.all(n.tools.map(async (it) => {
-                    const url = await evaluateNodeProperty(it.name, it.nameType, node, msg) as string;
+                    let url = await evaluateNodeProperty(it.name, it.nameType, node, msg) as string;
                     const segs = url.split('/');
-                    const name = segs[segs.length - 1];
+                    const name = segs.pop();
+                    if (segs[0] === '') {
+                        segs.shift();
+                    }
+                    if (segs.length === 0) {
+                        url = `http://localhost:${process.env.PORT ?? '1880'}/${name}`
+                    }
                     const description = await evaluateNodeProperty(it.description, it.descriptionType, node, msg);
                     const schema = await evaluateNodeProperty(it.schema, it.schemaType, node, msg);
                     return {
@@ -69,28 +76,32 @@ const LangchainChatNodeInitializer: NodeInitializer = (RED) => {
                                 }
                                 return data;
                             },
-                            function: async (args: any) => {
+                            function: async (args: any, runner: any) => {
                                 if (name === '__structured_output__') {
-                                    return args;
-                                }
-                                try {
-                                    const response = await fetch(url, { // TODO(QL): Custom headers, query?
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json'
-                                        },
-                                        body: JSON.stringify(args)
-                                    })
-                                    const text = await response.text();
+                                    runner.abort();
+                                    msg.payload = args;
+                                    return args
+                                } else {
                                     try {
-                                        const json = JSON.parse(text);
-                                        return json;
+                                        const response = await fetch(url, { // TODO(QL): Custom headers, query?
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json'
+                                            },
+                                            body: JSON.stringify(args)
+                                        })
+                                        const text = await response.text();
+                                        try {
+                                            const json = JSON.parse(text);
+                                            return json;
+                                        } catch (error) {
+                                            return text;
+                                        }
                                     } catch (error) {
-                                        return text;
+                                        return error;
                                     }
-                                } catch (error) {
-                                    return error;
                                 }
+                                
                             },
                             name,
                             description,
@@ -106,7 +117,6 @@ const LangchainChatNodeInitializer: NodeInitializer = (RED) => {
                 }, false, 10)})`);
 
                 try {
-                    const messages1: ChatCompletionMessageParam[] = [];
                     const runner = client.beta.chat.completions
                         .runTools({
                             model: n.model,
@@ -114,7 +124,7 @@ const LangchainChatNodeInitializer: NodeInitializer = (RED) => {
                             tools,
                         })
                         .on('message', (message) => {
-                            node.log(`message: ${message}`);
+                            node.log(`message: ${inspect(message, false, 10)}`);
                             messages1.push(message);
                         });
 
@@ -125,8 +135,15 @@ const LangchainChatNodeInitializer: NodeInitializer = (RED) => {
                     send(msg);
                     done();
                 } catch (error) {
-                    node.error(`error ${error}`);
-                    done(error);
+                    if (error instanceof APIUserAbortError) {
+                        // msg.payload has been set before aborted
+                        msg.messages = messages1;
+                        send(msg);
+                        done();
+                    } else {
+                        node.error(`error ${error}`);
+                        done(error);
+                    }
                 }
             } else {
                 try {
