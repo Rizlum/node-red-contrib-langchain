@@ -39,7 +39,7 @@
                     const row = $('<div/>').css({
                         overflow: 'hidden',
                         whiteSpace: 'nowrap',
-                        display: 'flex'
+                        display: 'flex',
                     }).appendTo(container);
                     const nameCell = $('<div/>').css({ 'flex-grow': 1 }).appendTo(row);
                     const nameInput = $('<input/>', { class: "node-input-tool-name", type: "text", style: "width: 100%" })
@@ -56,7 +56,12 @@
                         .appendTo(schemaCell)
                         .typedInput({ types: ['msg', 'json', 'jsonata'] });
 
-                    const { name, nameType, description, descriptionType, schema, schemaType } = tool;
+                    const optionsCell = $('<div/>').css({ 'flex-grow': 1, 'margin-left': '10px' }).appendTo(row);
+                    const optionsInput = $('<input/>', { class: "node-input-tool-options", type: "text", style: "width: 100%" })
+                        .appendTo(optionsCell)
+                        .typedInput({ types: ['msg', 'json', 'jsonata'] });
+
+                    const { name, nameType, description, descriptionType, schema, schemaType, options, optionsType } = tool;
 
                     nameInput.typedInput('type', nameType ?? 'str');
                     nameInput.typedInput('value', name ?? 'Name | Url | __structured_output__');
@@ -64,6 +69,8 @@
                     descriptionInput.typedInput('value', description ?? 'Call this tool to');
                     schemaInput.typedInput('type', schemaType ?? 'json');
                     schemaInput.typedInput('value', schema ?? '{"type":"object","properties":{"id":{"type":"number"}}}');
+                    optionsInput.typedInput('type', optionsType ?? 'json');
+                    optionsInput.typedInput('value', options ?? '{"headers":{"content-type":"application/json"}}');
                 },
                 sortable: true,
                 removable: true
@@ -88,8 +95,10 @@
                 const description = tool.find(".node-input-tool-description").typedInput('value');
                 const schemaType = tool.find(".node-input-tool-schema").typedInput('type');
                 const schema = tool.find(".node-input-tool-schema").typedInput('value');
+                const optionsType = tool.find(".node-input-tool-options").typedInput('type');
+                const options = tool.find(".node-input-tool-options").typedInput('value');
                 node.tools.push({
-                    name, nameType, description, descriptionType, schema, schemaType
+                    name, nameType, description, descriptionType, schema, schemaType, options, optionsType
                 });
             });
             console.log('oneditsave::tools', node.tools);

@@ -23,7 +23,9 @@ export interface LangchainChatNodeDef extends NodeDef {
         description: string,
         descriptionType: string,
         schema: any,
-        schemaType: string
+        schemaType: string,
+        options: any,
+        optionsType: string
     }[];
 }
 
@@ -62,6 +64,7 @@ const LangchainChatNodeInitializer: NodeInitializer = (RED) => {
                     }
                     const description = await evaluateNodeProperty(it.description, it.descriptionType, node, msg);
                     const schema = await evaluateNodeProperty(it.schema, it.schemaType, node, msg);
+                    const options = await evaluateNodeProperty(it.options, it.optionsType, node, msg);
                     return {
                         type: 'function',
                         function: {
@@ -88,7 +91,8 @@ const LangchainChatNodeInitializer: NodeInitializer = (RED) => {
                                             headers: {
                                                 'Content-Type': 'application/json'
                                             },
-                                            body: JSON.stringify(args)
+                                            body: JSON.stringify(args),
+                                            ...options
                                         })
                                         const text = await response.text();
                                         try {

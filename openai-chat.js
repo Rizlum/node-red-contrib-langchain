@@ -59,6 +59,7 @@ const LangchainChatNodeInitializer = (RED) => {
                     }
                     const description = await evaluateNodeProperty(it.description, it.descriptionType, node, msg);
                     const schema = await evaluateNodeProperty(it.schema, it.schemaType, node, msg);
+                    const options = await evaluateNodeProperty(it.options, it.optionsType, node, msg);
                     return {
                         type: 'function',
                         function: {
@@ -86,7 +87,8 @@ const LangchainChatNodeInitializer = (RED) => {
                                             headers: {
                                                 'Content-Type': 'application/json'
                                             },
-                                            body: JSON.stringify(args)
+                                            body: JSON.stringify(args),
+                                            ...options
                                         });
                                         const text = await response.text();
                                         try {
