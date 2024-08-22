@@ -134,8 +134,8 @@ const LangchainChatNodeInitializer: NodeInitializer = (RED) => {
                         model: n.model,
                         messages,
                     });
-                    msg.payload = chatCompletion.choices[0].message;
-                    msg.messages = [...messages, messages];
+                    msg.payload = chatCompletion.choices[0].message.content;
+                    msg.messages = [...messages, chatCompletion.choices[0].message];
                     send(msg);
                     done();
                 } catch (error) {
